@@ -1,0 +1,74 @@
+-----------------------------------------------------------
+----      KsqlDB Scripts to capture the covid stats   -----
+-----------------------------------------------------------
+
+-----Create a COVID Global Stream-----
+CREATE STREAM COVID_GLOBAL_STREAM
+(
+    ID STRING,
+    Global STRUCT<
+    NewConfirmed BIGINT,
+    TotalConfirmed BIGINT,
+    NewDeaths BIGINT,
+    TotalDeaths BIGINT,
+    NewRecovered BIGINT,
+    TotalRecovered BIGINT>
+
+)
+WITH (
+    KAFKA_TOPIC = 'demo.covid.live.data',
+    VALUE_FORMAT = 'JSON'
+);
+
+----Create a temporary stream to get json string with stats by country----
+CREATE STREAM COVID_COUNTRIES_STREAM
+(
+    Countries ARRAY <STRUCT<
+    Country STRING,
+    CountryCode STRING,
+    NewConfirmed BIGINT,
+    TotalConfirmed BIGINT,
+    NewDeaths BIGINT,
+    TotalDeaths BIGINT,
+    NewRecovered BIGINT,
+    TotalRecovered BIGINT>>
+
+)
+WITH (
+    KAFKA_TOPIC = 'demo.covid.live.data',
+    VALUE_FORMAT = 'JSON'
+);
+
+----Create a temporary stream to split the stats by country----
+CREATE STREAM COVID_TEMP WITH (KAFKA_TOPIC='COVID_TEMP_TOPIC', PARTITIONS=6, REPLICAS=3) AS SELECT EXPLODE(COVID_COUNTRIES_STREAM.COUNTRIES) KSQL_COL_0
+FROM COVID_COUNTRIES_STREAM COVID_COUNTRIES_STREAM
+EMIT CHANGES;
+
+----Create a temporary stream to flatten the json object to individual fields----
+
+CREATE STREAM COVID_BY_COUNTRY_TEMP WITH (KAFKA_TOPIC='COVID_BY_COUNTRY_TEMP_KEY', PARTITIONS=6, REPLICAS=3) AS SELECT
+  COVID_TEMP.KSQL_COL_0->COUNTRY COUNTRY,
+  COVID_TEMP.KSQL_COL_0->COUNTRYCODE COUNTRYCODE,
+  COVID_TEMP.KSQL_COL_0->NEWCONFIRMED NEWCONFIRMED,
+  COVID_TEMP.KSQL_COL_0->TOTALCONFIRMED TOTALCONFIRMED,
+  COVID_TEMP.KSQL_COL_0->NEWDEATHS NEWDEATHS,
+  COVID_TEMP.KSQL_COL_0->TOTALDEATHS TOTALDEATHS,
+  COVID_TEMP.KSQL_COL_0->NEWRECOVERED NEWRECOVERED,
+  COVID_TEMP.KSQL_COL_0->TOTALRECOVERED TOTALRECOVERED
+FROM COVID_TEMP COVID_TEMP
+PARTITION BY COVID_TEMP.KSQL_COL_0->COUNTRYCODE
+EMIT CHANGES;
+----Create a table for covid stats by country----
+CREATE TABLE COVID_BY_COUNTRY_TABLE (
+     COUNTRY VARCHAR ,
+     COUNTRYCODE VARCHAR PRIMARY KEY,
+     NEWCONFIRMED BIGINT,
+     TOTALCONFIRMED BIGINT,
+     NEWDEATHS BIGINT,
+     TOTALDEATHS BIGINT,
+     NEWRECOVERED BIGINT,
+     TOTALRECOVERED BIGINT
+   ) WITH (
+     KAFKA_TOPIC = 'COVID_BY_COUNTRY_TEMP', 
+     VALUE_FORMAT = 'JSON'
+   );
