@@ -1,13 +1,13 @@
 #!/bin/bash
-export CLUSTER_ID='lkc-53j8n'
+export CLUSTER_ID=''
 export PATH=$PATH:~/ccloud
-export TOPIC_NAME='demo.covid.live.data'
+export TOPIC_NAME=''
 ccloud login
 ccloud kafka cluster use $CLUSTER_ID
 ccloud kafka topic create $TOPIC_NAME
-export CCLOUD_BOOTSTRAP_SERVER='pkc-4nym6.us-east-1.aws.confluent.cloud:9092'
-export CCLOUD_API_KEY='VWDIFBVBOU3H3ADI'
-export CCLOUD_API_SECRET='WCTTj2LQ1C2fuLwCN3zPNuloAQ5SEWt+mWMqC1ts5Z4JrYAwOubRAMppbdWFU0Jt'
+export CCLOUD_BOOTSTRAP_SERVER=''
+export CCLOUD_API_KEY=''
+export CCLOUD_API_SECRET=''
 i=0
 while true
 do
