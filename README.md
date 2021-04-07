@@ -1,6 +1,6 @@
 # ksqlDB-demo
 
-This github repo lets you publish covid data to Confluent Cloud by making a public REST API call.
+This github repo lets you publish covid data to Confluent Cloud by making a public REST API call. There is a ksqlDB script **covid-data-scripts.ksql** that you can use to demo ksqlDB dunctionality on Confluent Cloud.
 
 You will need to configure certain parameters in the script **covid-data-template.sh**. You will also need to download ccloud (confluent cloud CLI tool) and refer that in your PATH
 
